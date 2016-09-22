@@ -294,8 +294,12 @@ public class Key {
 
         table[i+1][j+1] = firstBigram.second;
         table[i-1][j-1] = secondBigram.first;
+        table[i+1][j+1] = third.second;
         table[i+1][j+1] = firstBigram.second;
-        table[i+1][j+1] = firstBigram.second;
+
+        ///поставили пару точек и скобок
+
+
         return null;
     }
 
