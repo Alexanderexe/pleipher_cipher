@@ -169,6 +169,9 @@ public class Key {
 
             for (Quintet pairQuintet: quintets) {
 
+                flag = 0;
+                ch = ' ';
+
                 if(!quintet.equals(pairQuintet)){
 
 
@@ -270,32 +273,7 @@ public class Key {
         int j = 0;
 
         table = placeCross(cross,indexes[i].getX(),indexes[i].getY());
-        Bigram first = new Bigram();
-        Bigram second = new Bigram();
-        Bigram third = new Bigram();
-        Bigram fourth = new Bigram();
 
-        first.first = table[indexes[i].getX()+1][indexes[i].getY()];
-        first.second = table[indexes[i].getX()][indexes[i].getY()-1];
-
-        second.first = table[indexes[i].getX()-1][indexes[i].getY()];
-        second.second = table[indexes[i].getX()][indexes[i].getY()-1];
-
-        third.first = table[indexes[i].getX()][indexes[i].getY()+1];
-        third.second = table[indexes[i].getX()-1][indexes[i].getY()];
-
-        third.first = table[indexes[i].getX()-1][indexes[i].getY()];
-        third.second = table[indexes[i].getX()][indexes[i].getY()+1];
-
-        Bigram firstBigram = Cipher.findBigram(bigrams,first.toString());
-        Bigram secondBigram = Cipher.findBigram(bigrams,second.toString());
-        Bigram thirdBigram = Cipher.findBigram(bigrams,third.toString());
-        Bigram fourthBigram = Cipher.findBigram(bigrams,fourth.toString());
-
-        table[i+1][j+1] = firstBigram.second;
-        table[i-1][j-1] = first.first;
-        table[i+1][j+1] = third.second;
-        table[i+1][j+1] = firstBigram.second;
 
         ///поставили пару точек и скобок
 
@@ -305,6 +283,212 @@ public class Key {
 
         return null;
     }
+
+
+    public static HashSet<KeyBigram> findPlacesofBigrams(Character[][] key){
+
+        HashSet<KeyBigram> bigrams = new HashSet<>();
+
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                Character first = key[i][j];
+                for (int k = 4; k >= 0; k--) {
+                    for (int l = 0; l < 5; l++) {
+                        Character second = key[k][l];
+                        Bigram bigram = new Bigram();
+                        bigram.first = first;
+                        bigram.second = second;
+                        IndexOfCharacter fir = new IndexOfCharacter();
+                        fir.setI(i);
+                        fir.setJ(j);
+                        IndexOfCharacter sec = new IndexOfCharacter();
+                        sec.setI(k);
+                        sec.setJ(l);
+                        KeyBigram keybigram = new KeyBigram(bigram,fir,sec);
+
+                        if(first != null && second != null) {
+                            bigrams.add(keybigram);
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
+        return bigrams;
+    }
+
+
+    public static HashSet<KeyBigram> crossBigrams(HashSet<KeyBigram> bigrams){
+
+        HashSet<KeyBigram> bigra = new HashSet<>();
+
+        for (KeyBigram bigram: bigrams) {
+
+            if(!(bigram.firstindex.getX() == bigram.secondindex.getX()) && !(bigram.firstindex.getY() == bigram.secondindex.getY())){
+                bigra.add(bigram);
+            }
+
+
+        }
+
+        return  bigra;
+    }
+
+
+    public static HashSet<KeyBigram> lineBigrams(HashSet<KeyBigram> bigrams){
+
+        HashSet<KeyBigram> bigra = new HashSet<>();
+
+        for (KeyBigram bigram: bigrams) {
+
+            if(bigram.firstindex.getX() == bigram.secondindex.getX() || bigram.firstindex.getY() == bigram.secondindex.getY()){
+                bigra.add(bigram);
+            }
+
+
+        }
+
+        return  bigra;
+    }
+
+
+
+    public static HashSet<KeyBigramPair> defineBigram(Bigram[][] bigrams,HashSet<KeyBigram> keybigrams){
+
+        HashSet<KeyBigramPair> pairs = new HashSet<>();
+
+        for (KeyBigram key : keybigrams ) {
+
+            Bigram bigram = Cipher.findBigram(bigrams,key.bigram.toString());
+            BigramPair pair = new BigramPair();
+            pair.setOpen(key.bigram);
+            pair.setCipher(bigram);
+            KeyBigramPair keypair = new KeyBigramPair();
+            keypair.ONE = key;
+
+            IndexOfCharacter first = new IndexOfCharacter();
+            IndexOfCharacter second = new IndexOfCharacter();
+
+            second.setI(key.firstindex.getX());
+            second.setJ(key.secondindex.getY());
+
+            first.setI(key.secondindex.getX());
+            first.setJ(key.firstindex.getY());
+
+            KeyBigram keyBigramSec = new KeyBigram(bigram,first,second);
+
+            keypair.TWO = keyBigramSec;
+            if (pair.getCipher() != null) {
+               pairs.add(keypair);
+            }
+
+
+        }
+
+
+
+
+
+        return pairs;
+    }
+
+    public static Character[][] makeKey(Character ch,Character[][] key,HashSet<KeyBigramPair> bla){
+
+
+        Character[][] k = key;
+
+        for (KeyBigramPair keypair : bla ) {
+            if (keypair.TWO.bigram.first == ch) {
+                k[keypair.TWO.secondindex.getX()][keypair.TWO.secondindex.getY()] = keypair.TWO.bigram.second;
+            }
+            if (keypair.TWO.bigram.second == ch) {
+                k[keypair.TWO.firstindex.getX()][keypair.TWO.firstindex.getY()] = keypair.TWO.bigram.first;
+            }
+
+
+        }
+
+        return k;
+    }
+
+
+    public static Character[][] makelineKey(Character[][] key,HashSet<KeyBigramPair> bla){
+
+
+        Character[][] k = key;
+
+        for (KeyBigramPair keypair : bla ) {
+            if(keypair.ONE.firstindex.getX() == keypair.ONE.secondindex.getX()){
+                int nextx = keypair.ONE.firstindex.getX();
+                int nexty = keypair.ONE.firstindex.getY();
+                if(keypair.ONE.firstindex.getY() == 4){
+                    nexty = 0;
+                }
+                else {
+                    nexty = nexty + 1;
+                }
+
+                k[nextx][nexty] = keypair.TWO.bigram.first;
+
+
+                nextx = keypair.ONE.secondindex.getX();
+                nexty = keypair.ONE.secondindex.getY();
+                if(keypair.ONE.secondindex.getY() == 4){
+                    nexty = 0;
+                }
+                else {
+                    nexty = nexty + 1;
+                }
+
+                k[nextx][nexty] = keypair.TWO.bigram.second;
+            }
+            if(keypair.ONE.firstindex.getY() == keypair.ONE.secondindex.getY()){
+
+                int nextx = keypair.ONE.firstindex.getX();
+                int nexty = keypair.ONE.firstindex.getY();
+                if(keypair.ONE.firstindex.getX() == 4){
+                    nextx = 0;
+                }
+                else {
+                    nextx = nextx + 1;
+                }
+
+                k[nextx][nexty] = keypair.TWO.bigram.first;
+
+
+                nextx = keypair.ONE.secondindex.getX();
+                nexty = keypair.ONE.secondindex.getY();
+                if(keypair.ONE.secondindex.getX() == 4){
+                    nextx = 0;
+                }
+                else {
+                    nextx = nextx + 1;
+                }
+
+                k[nextx][nexty] = keypair.TWO.bigram.second;
+
+
+            }
+
+
+        }
+
+        return k;
+    }
+
+
+
+
+
+
+
+
+
 
 
 
